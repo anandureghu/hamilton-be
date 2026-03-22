@@ -45,15 +45,20 @@ import { DatabaseService } from './database.service';
             `Successfully eager-loaded PostgreSQL pool!`,
             'DatabaseModule',
           );
-        } catch (error) {
+        } catch (error: unknown) {
           const stack = error instanceof Error ? error.stack : undefined;
 
           logger.error(
-            'Failed to connect to PostgreSQL database on startup',
+            'FATAL: Failed to connect to PostgreSQL database. Exiting application...',
             stack,
             'DatabaseModule',
           );
-          throw error;
+
+          // 1. Force the pool to close, killing any pending background sockets
+          pool.end().catch(() => {});
+
+          // 2. Kill the Node process instantly
+          process.exit(1);
         }
 
         return pool;
