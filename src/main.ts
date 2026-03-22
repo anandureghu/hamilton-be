@@ -16,7 +16,7 @@ async function bootstrap() {
 
   // Updated to dynamically log the actual port being used
   logger.log(
-    `Application started successfully on port ${port ?? 3001}`,
+    `Application started successfully on port http://localhost:${port ?? 3001}`,
     'Bootstrap',
   );
 }

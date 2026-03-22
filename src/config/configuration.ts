@@ -3,6 +3,7 @@ import { registerAs } from '@nestjs/config';
 export default registerAs('config', () => ({
   environment: process.env.NODE_ENV,
   port: process.env.PORT,
+  project: process.env.PROJECT_NAME,
   database: {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT || '5432', 10),

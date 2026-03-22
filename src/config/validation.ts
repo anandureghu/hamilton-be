@@ -9,4 +9,5 @@ export default Joi.object({
   DB_PASSWORD: Joi.string().required(),
   DB_NAME: Joi.string().required(),
   DB_MAX_CONNECTIONS: Joi.number().required(),
+  PROJECT_NAME: Joi.string().required(),
 });
