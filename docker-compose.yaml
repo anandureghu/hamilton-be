@@ -1,0 +1,34 @@
+services:
+  api:
+    build: .
+    container_name: hamilton-api
+    # This line reads your local .env and makes variables available to NestJS/Knex
+    env_file:
+      - .env
+    ports:
+      - '${PORT}:${PORT}'
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - hamilton-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: hamilton-db
+    # Maps specific .env values to the Postgres internal config
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hamilton-network
+
+networks:
+  hamilton-network:
+    driver: bridge
