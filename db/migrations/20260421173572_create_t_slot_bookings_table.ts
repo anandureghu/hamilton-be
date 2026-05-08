@@ -31,6 +31,7 @@ export async function up(knex: Knex): Promise<void> {
         enumName: 'booking_status',
       })
       .defaultTo('confirmed');
+    table.boolean('is_active').defaultTo(true);
     table
       .uuid('created_by')
       .references('id')
