@@ -153,6 +153,7 @@ export class UserService {
     userId: string,
   ): Promise<UserProfileResponseDto> {
     try {
+      await this.db.query(`BEGIN;`);
       const [data] = await this.db.query<UserProfileResponseDto>(
         addCustomerQuery,
         [
@@ -172,9 +173,29 @@ export class UserService {
           userId,
         ],
       );
+      if (!data.id) {
+        await this.db.query(`ROLLBACK;`);
+        throw new NotFoundException('data not found or update failed');
+      }
+      const [vehicleData] = await this.db.query<UserVehicleResponseDto>(
+        addUserVehicleQuery,
+        [
+          body.license_plate || null,
+          body.odo_reading || null,
+          body.vehicle || null,
+          data.id,
+          userId,
+        ],
+      );
+      if (!vehicleData.id) {
+        await this.db.query(`ROLLBACK;`);
+        throw new NotFoundException('data not found or update failed');
+      }
+      await this.db.query(`COMMIT;`);
 
       return data;
     } catch (error: unknown) {
+      await this.db.query(`ROLLBACK;`);
       if (error instanceof Error) {
         this.logger.error(`FindById Error: ${error.message}`, error.stack);
       } else {

@@ -8,21 +8,34 @@ export class WinstonLoggerService implements LoggerService {
 
   constructor() {
     const logFormat = winston.format.printf((info) => {
-      // ... (keep your existing logFormat logic here)
-      const { timestamp, level, context, stack, message } = info as any;
-      const contextStr = context ? `[${context}] ` : '';
+      const { timestamp, level, context, stack, message, ...meta } =
+        info as any;
+
+      const contextStr = typeof context === 'string' ? `[${context}] ` : '';
+
       const msgStr = stack
         ? stack
         : typeof message === 'string'
           ? message
           : JSON.stringify(message);
-      return `${timestamp || ''} [${level}]: ${contextStr}${msgStr}`;
+
+      const finalMeta =
+        typeof context === 'object' ? { ...context, ...meta } : meta;
+
+      const filteredMeta = { ...finalMeta };
+      delete filteredMeta.timestamp;
+      delete filteredMeta.level;
+
+      const metaStr =
+        Object.keys(filteredMeta).length > 0
+          ? `\n${JSON.stringify(filteredMeta, null, 2)}`
+          : '';
+
+      return `${timestamp || ''} [${level}]: ${contextStr}${msgStr}${metaStr}`;
     });
 
     const transportsList: winston.transport[] = [];
 
-    // 1. ONLY add File transports if running locally.
-    // This strictly prevents the 'mkdir logs' crash on Vercel.
     if (process.env.NODE_ENV !== 'production') {
       transportsList.push(
         new winston.transports.File({
@@ -37,8 +50,6 @@ export class WinstonLoggerService implements LoggerService {
       );
     }
 
-    // 2. ALWAYS add the Console transport.
-    // Vercel reads from stdout/stderr, so this ensures your logs appear in the Vercel dashboard.
     transportsList.push(
       new winston.transports.Console({
         format: winston.format.combine(
@@ -65,28 +76,50 @@ export class WinstonLoggerService implements LoggerService {
     this.context = context;
   }
 
-  log(message: unknown, context?: string) {
-    this.logger.info(message as string, { context: context || this.context });
+  log(message: unknown, context?: string | object) {
+    if (typeof context === 'object') {
+      this.logger.info(message as string, context);
+    } else {
+      this.logger.info(message as string, { context: context || this.context });
+    }
   }
 
-  error(message: unknown, stack?: string, context?: string) {
-    this.logger.error(message as string, {
-      stack,
-      context: context || this.context,
-    });
+  error(message: unknown, stack?: string, context?: string | object) {
+    if (typeof context === 'object') {
+      this.logger.error(message as string, { stack, ...context });
+    } else {
+      this.logger.error(message as string, {
+        stack,
+        context: context || this.context,
+      });
+    }
   }
 
-  warn(message: unknown, context?: string) {
-    this.logger.warn(message as string, { context: context || this.context });
+  warn(message: unknown, context?: string | object) {
+    if (typeof context === 'object') {
+      this.logger.warn(message as string, context);
+    } else {
+      this.logger.warn(message as string, { context: context || this.context });
+    }
   }
 
-  debug(message: unknown, context?: string) {
-    this.logger.debug(message as string, { context: context || this.context });
+  debug(message: unknown, context?: string | object) {
+    if (typeof context === 'object') {
+      this.logger.debug(message as string, context);
+    } else {
+      this.logger.debug(message as string, {
+        context: context || this.context,
+      });
+    }
   }
 
-  verbose(message: unknown, context?: string) {
-    this.logger.verbose(message as string, {
-      context: context || this.context,
-    });
+  verbose(message: unknown, context?: string | object) {
+    if (typeof context === 'object') {
+      this.logger.verbose(message as string, context);
+    } else {
+      this.logger.verbose(message as string, {
+        context: context || this.context,
+      });
+    }
   }
 }

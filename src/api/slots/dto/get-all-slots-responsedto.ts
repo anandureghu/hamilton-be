@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty, Matches } from 'class-validator';
 
-export class GetAllSlotQueryDto {
+export class GetAllSlotResponseDto {
   @ApiProperty({
     example: '2026-06-30',
     description: 'The date to fetch slots for (YYYY-MM-DD)',

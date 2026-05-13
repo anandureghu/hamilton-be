@@ -4,9 +4,11 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
+  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -78,4 +80,22 @@ export class AddUserDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({ example: 'KL-36-AB-1234' })
+  @IsOptional()
+  @IsString()
+  license_plate?: string;
+
+  @ApiPropertyOptional({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Vehicle id from m_vehicle table',
+  })
+  @IsOptional()
+  @IsUUID()
+  vehicle: string;
+
+  @ApiPropertyOptional({ example: '1234567890' })
+  @IsOptional()
+  @IsNumber()
+  odo_reading: number;
 }

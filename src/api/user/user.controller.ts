@@ -5,7 +5,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -15,6 +14,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiPaginatedResponse } from '../../common/decorators/api-response.decorator';
 import { IdParamsDto } from '../../common/dto/user-params.dto';
 import { CreateUserVehicleDto } from './dto/add-vehicle-user.dto';
+import { CreateBookingDto } from './dto/get-slot-booking-details.dto';
 import { UserVehicleResponseDto } from './dto/get-users-vehicle-response.dto';
 import { VehicleResponseDto } from './dto/get-vehicle-detail-by-id-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -94,12 +94,13 @@ export class UserController {
     return this.userService.getUserVehicleDetailsById(params.id, idParam.id);
   }
 
-  //dummy
-  @ApiOperation({ summary: 'Get slots' })
-  @ApiPaginatedResponse(VehicleResponseDto)
+  @ApiOperation({ summary: 'Get users booking details' })
+  @ApiPaginatedResponse(CreateBookingDto, true)
   @UseGuards(JwtAuthGuard)
-  @Get('slots')
-  async getSlots(@Query() date: { date: string }): Promise<VehicleResponseDto> {
-    return this.userService.getSlots(date.date);
+  @Get('booking')
+  async getUserBookingDetails(
+    @CurrentUser() user: CurrentuserDto,
+  ): Promise<CreateBookingDto[]> {
+    return this.userService.getUserBookingDetails(user.id);
   }
 }

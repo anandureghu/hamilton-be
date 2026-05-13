@@ -1,65 +1,91 @@
-import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 
 @Injectable()
 export class HttpLoggerMiddleware implements NestMiddleware {
-  constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-  ) {}
+  private readonly logger = new Logger('HttpLogger');
 
   use(req: Request, res: Response, next: NextFunction): void {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { method, originalUrl, body, query, params, ip } = req;
     const userAgent = req.get('user-agent') || '';
     const start = Date.now();
+
+    const originalSend = res.send;
+    let responseBody: any;
+
+    res.send = (chunk: any): Response => {
+      responseBody = chunk;
+      return originalSend.call(res, chunk);
+    };
 
     res.on('finish', () => {
       const { statusCode } = res;
       const duration = Date.now() - start;
 
-      this.logger.info(`HTTP ${method} ${originalUrl}`, {
-        context: 'HttpLogger',
-        metadata: {
-          method,
-          url: originalUrl,
-          statusCode,
-          duration: `${duration}ms`,
-          ip,
-          userAgent,
-          params,
-          query,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          body: this.sanitizeBody(body),
+      let parsedResponseBody = responseBody;
+      if (typeof responseBody === 'string') {
+        try {
+          parsedResponseBody = JSON.parse(responseBody);
+        } catch {}
+      }
+
+      this.logger.log(
+        `HTTP ${method} ${originalUrl} ${statusCode} - ${duration}ms`,
+        {
+          context: 'HttpLogger',
+          metadata: {
+            method,
+            url: originalUrl,
+            statusCode,
+            duration: `${duration}ms`,
+            ip,
+            userAgent,
+            request: {
+              params,
+              query,
+              body: this.sanitize(body),
+            },
+            response: {
+              body: this.sanitize(parsedResponseBody),
+            },
+          },
         },
-      });
+      );
     });
 
     next();
   }
 
-  private sanitizeBody(body: any) {
-    if (!body) return {};
+  private sanitize(data: any): any {
+    if (!data || typeof data !== 'object') return data;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const sanitized = { ...body };
     const blacklistedFields = [
       'password',
       'token',
       'accessToken',
+      'refreshToken',
       'clientSecret',
+      'secret',
+      'authorization',
     ];
 
-    blacklistedFields.forEach((field) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (sanitized[field]) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        sanitized[field] = '********';
+    if (Array.isArray(data)) {
+      return data.map((item) => this.sanitize(item));
+    }
+
+    const sanitized = { ...data };
+
+    Object.keys(sanitized).forEach((key) => {
+      if (blacklistedFields.includes(key.toLowerCase())) {
+        sanitized[key] = '********';
+      } else if (
+        typeof sanitized[key] === 'object' &&
+        sanitized[key] !== null
+      ) {
+        sanitized[key] = this.sanitize(sanitized[key]);
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return sanitized;
   }
 }

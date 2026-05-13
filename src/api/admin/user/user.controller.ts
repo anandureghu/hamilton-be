@@ -75,7 +75,7 @@ export class UserController {
   @ApiPaginatedResponse(UserProfileResponseDto)
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.STAFF)
   @Delete(':id')
   async softDeleteUserById(
     @Param() params: IdParamsDto,

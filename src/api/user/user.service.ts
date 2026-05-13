@@ -9,11 +9,13 @@ import { UpdateUserVehicleDto } from './dto/update-vehicle-user.dto';
 import { UserProfileResponseDto } from './dto/user-profile.dto';
 import { addUserVehicleQuery } from './query/add-user-vehicle.query';
 import { getSlotsQuery } from './query/get-slot-timing.query';
+import { getUserBookingDetailsQuery } from './query/get-user-booking-details.query';
 import { getVehicleDetailsByIdQuery } from './query/get-vehicle-details-by-id.query';
 import { getVehicleListByUserId } from './query/get-vehicle-list-by-user-id.query';
 import { userSoftDeleteQuery } from './query/user-soft-delete.query';
 import { userUpdateQuery } from './query/user-update.query';
 import { userVehicleUpdateQuery } from './query/user-vehicle-update.query';
+import { CreateBookingDto } from './dto/get-slot-booking-details.dto';
 
 @Injectable()
 export class UserService {
@@ -193,6 +195,23 @@ export class UserService {
     try {
       const data = await this.db.query<any>(getSlotsQuery, [date]);
 
+      return data;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(`FindById Error: ${error.message}`, error.stack);
+      } else {
+        this.logger.error('An unknown error occurred in findById');
+      }
+      throw error;
+    }
+  }
+
+  async getUserBookingDetails(userId: string): Promise<CreateBookingDto[]> {
+    try {
+      const data = await this.db.query<CreateBookingDto>(
+        getUserBookingDetailsQuery,
+        [userId],
+      );
       return data;
     } catch (error: unknown) {
       if (error instanceof Error) {

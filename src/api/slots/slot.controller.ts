@@ -14,7 +14,7 @@ import { CurrentuserDto } from '../../auth/dto/current-user.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ApiPaginatedResponse } from '../../common/decorators/api-response.decorator';
 import { BookSlotResponseDto } from './dto/book-slot-response.dto';
-import { GetAllSlotQueryDto } from './dto/get-all-slots-query.dto';
+import { GetAllSlotResponseDto } from './dto/get-all-slots-responsedto';
 import { SlotTimingDto } from './dto/get-all-slots.dto';
 import { SlotBookingBodyDto } from './dto/slot-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -31,7 +31,7 @@ export class SlotController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async getAllBrand(
-    @Query() params: GetAllSlotQueryDto,
+    @Query() params: GetAllSlotResponseDto,
   ): Promise<SlotTimingDto[]> {
     return this.slotService.getAllAvailableSlots(params.date);
   }
@@ -48,7 +48,7 @@ export class SlotController {
   }
 
   @ApiOperation({ summary: 'Update booked slot' })
-  @ApiPaginatedResponse(BookSlotResponseDto)
+  @ApiPaginatedResponse(SlotTimingDto, true)
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async updateBookedSlot(
