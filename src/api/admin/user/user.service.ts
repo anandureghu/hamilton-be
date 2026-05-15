@@ -177,19 +177,21 @@ export class UserService {
         await this.db.query(`ROLLBACK;`);
         throw new NotFoundException('data not found or update failed');
       }
-      const [vehicleData] = await this.db.query<UserVehicleResponseDto>(
-        addUserVehicleQuery,
-        [
-          body.license_plate || null,
-          body.odo_reading || null,
-          body.vehicle || null,
-          data.id,
-          userId,
-        ],
-      );
-      if (!vehicleData.id) {
-        await this.db.query(`ROLLBACK;`);
-        throw new NotFoundException('data not found or update failed');
+      if (body.vehicle || body.license_plate || body.odo_reading) {
+        const [vehicleData] = await this.db.query<UserVehicleResponseDto>(
+          addUserVehicleQuery,
+          [
+            body.license_plate || null,
+            body.odo_reading || null,
+            body.vehicle || null,
+            data.id,
+            userId,
+          ],
+        );
+        if (!vehicleData.id) {
+          await this.db.query(`ROLLBACK;`);
+          throw new NotFoundException('data not found or update failed');
+        }
       }
       await this.db.query(`COMMIT;`);
 
